@@ -1,0 +1,36 @@
+{
+  "name": "lxrn",
+  "version": "1.0.0",
+  "description": "A comprehensive mathematical and utility framework for JavaScript",
+  "author": "LXRN (Luxarion)",
+  "license": "MIT",
+  "type": "module",
+  "main": "core/index.js",
+  "exports": {
+    ".": "./core/index.js",
+    "./mathUtils": "./core/mathUtils.js",
+    "./coreUtils": "./core/coreUtils.js"
+  },
+  "files": [
+    "core/**/*.js"
+  ],
+  "scripts": {
+    "test": "node tests/runAllTests.js"
+  },
+  "keywords": [
+    "math",
+    "utilities",
+    "framework",
+    "javascript",
+    "lxrn",
+    "luxarion"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PrasetyoBayu07/framework/framework.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PrasetyoBayu07/framework/issues"
+  },
+  "homepage": "https://github.com/PrasetyoBayu07/framework/#readme"
+}
