@@ -245,7 +245,6 @@ export const UNIT_RADIANS = 'rad';
 export const UNIT_TURNS = 'turn';
 export const UNIT_GRADIANS = 'grad';
 
-// ===== VERSION =====
 export const VERSION = '1.0.0';
 
 // ===== RENDER CONSTANTS =====
@@ -542,12 +541,7 @@ export const RenderObjectRefreshType = {
     FULL: 2
 };
 
-// ============================================================
-// ===== CONSTANTS OBJECT AGGREGATE =====
-// ============================================================
-
 export const constants = {
-    // Mathematical Constants
     PI,
     TWO_PI,
     HALF_PI,
@@ -565,8 +559,6 @@ export const constants = {
     GOLDEN_RATIO,
     PHI,
     TAU,
-
-    // Physical Constants
     GRAVITY,
     SPEED_OF_LIGHT,
     PLANCK_CONSTANT,
@@ -576,16 +568,12 @@ export const constants = {
     ELECTRON_CHARGE,
     ELECTRON_MASS,
     PROTON_MASS,
-
-    // Angle Constants
     DEGREES_360,
     DEGREES_180,
     DEGREES_90,
     DEGREES_45,
     DEGREES_30,
     DEGREES_60,
-
-    // Time Constants
     MILLISECONDS_PER_SECOND,
     SECONDS_PER_MINUTE,
     MINUTES_PER_HOUR,
@@ -593,14 +581,10 @@ export const constants = {
     DAYS_PER_WEEK,
     DAYS_PER_YEAR,
     MONTHS_PER_YEAR,
-
-    // Data Size Constants
     KILOBYTE,
     MEGABYTE,
     GIGABYTE,
     TERABYTE,
-
-    // Color Constants
     COLOR_WHITE,
     COLOR_BLACK,
     COLOR_RED,
@@ -613,7 +597,6 @@ export const constants = {
     COLOR_PURPLE,
     COLOR_PINK,
     COLOR_BROWN,
-
     HEX_WHITE,
     HEX_BLACK,
     HEX_RED,
@@ -626,7 +609,6 @@ export const constants = {
     HEX_PURPLE,
     HEX_PINK,
     HEX_BROWN,
-
     CSS_WHITE,
     CSS_BLACK,
     CSS_RED,
@@ -639,15 +621,11 @@ export const constants = {
     CSS_PURPLE,
     CSS_PINK,
     CSS_BROWN,
-
-    // Math Limits
     MATH_MAX,
     MATH_MIN,
     POSITIVE_INFINITY,
     NEGATIVE_INFINITY,
     NOT_A_NUMBER,
-
-    // Default Values
     DEFAULT_SEED,
     DEFAULT_EPSILON,
     DEFAULT_TTL,
@@ -655,14 +633,10 @@ export const constants = {
     DEFAULT_MAX_LISTENERS,
     DEFAULT_MAX_RETRIES,
     DEFAULT_TIMEOUT,
-
-    // Framework Constants
     FRAMEWORK_NAME,
     FRAMEWORK_VERSION,
     FRAMEWORK_AUTHOR,
     FRAMEWORK_LICENSE,
-
-    // UI Constants
     UI_PADDING_SMALL,
     UI_PADDING_MEDIUM,
     UI_PADDING_LARGE,
@@ -678,8 +652,6 @@ export const constants = {
     UI_BORDER_RADIUS_SMALL,
     UI_BORDER_RADIUS_MEDIUM,
     UI_BORDER_RADIUS_LARGE,
-
-    // Animation Constants
     ANIMATION_DURATION_FAST,
     ANIMATION_DURATION_MEDIUM,
     ANIMATION_DURATION_SLOW,
@@ -687,8 +659,6 @@ export const constants = {
     ANIMATION_EASE_IN,
     ANIMATION_EASE_OUT,
     ANIMATION_LINEAR,
-
-    // Regex Patterns
     REGEX_EMAIL,
     REGEX_URL,
     REGEX_PHONE,
@@ -701,8 +671,6 @@ export const constants = {
     REGEX_WHITESPACE,
     REGEX_NON_WORD,
     REGEX_MULTIPLE_SPACES,
-
-    // MIME Types
     MIME_JSON,
     MIME_XML,
     MIME_HTML,
@@ -720,8 +688,6 @@ export const constants = {
     MIME_OCTET,
     MIME_FORM_DATA,
     MIME_URLENCODED,
-
-    // HTTP Status Codes
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
@@ -745,8 +711,6 @@ export const constants = {
     HTTP_502_BAD_GATEWAY,
     HTTP_503_SERVICE_UNAVAILABLE,
     HTTP_504_GATEWAY_TIMEOUT,
-
-    // HTTP Methods
     HTTP_GET,
     HTTP_POST,
     HTTP_PUT,
@@ -754,25 +718,17 @@ export const constants = {
     HTTP_PATCH,
     HTTP_HEAD,
     HTTP_OPTIONS,
-
-    // Log Levels
     LOG_LEVEL_DEBUG,
     LOG_LEVEL_INFO,
     LOG_LEVEL_WARN,
     LOG_LEVEL_ERROR,
     LOG_LEVEL_NONE,
-
-    // Cache Strategies
     CACHE_STRATEGY_LRU,
     CACHE_STRATEGY_TTL,
     CACHE_STRATEGY_MEMORY,
     CACHE_STRATEGY_PERSISTENT,
-
-    // Sort Orders
     SORT_ORDER_ASC,
     SORT_ORDER_DESC,
-
-    // Units
     UNIT_PIXELS,
     UNIT_PERCENT,
     UNIT_EM,
@@ -783,8 +739,6 @@ export const constants = {
     UNIT_RADIANS,
     UNIT_TURNS,
     UNIT_GRADIANS,
-
-    // Three.js Compatibility Constants
     VERSION,
     CullFaceNone,
     CullFaceBack,
