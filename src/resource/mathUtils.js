@@ -338,26 +338,10 @@ export function floorPowerOfTwo(value) {
   return Math.pow(2, Math.floor(Math.log(value) / Math.LN2));
 }
 
-// ===== FUNGSI TAMBAHAN (Three.js MathUtils compatibility) =====
-
-/**
- * Computes the Euclidean modulo of n and m.
- * @param {number} n - The dividend.
- * @param {number} m - The divisor.
- * @returns {number} The Euclidean modulo.
- */
 export function euclideanModulo(n, m) {
   return ((n % m) + m) % m;
 }
 
-/**
- * Sets a quaternion from proper Euler angles.
- * @param {object} q - The quaternion object with _x, _y, _z, _w or set() method.
- * @param {number} a - Rotation around first axis in radians.
- * @param {number} b - Rotation around second axis in radians.
- * @param {number} c - Rotation around third axis in radians.
- * @param {string} order - The Euler order ('XYX', 'XZX', 'YXY', 'YZY', 'ZXZ', 'ZYZ').
- */
 export function setQuaternionFromProperEuler(q, a, b, c, order) {
   const cos = Math.cos;
   const sin = Math.sin;
