@@ -291,16 +291,371 @@ export class ColorPalette {
         return ColorPalette.tetradic(baseColor, 90);
     }
 
+    // ===== IMAGE PALETTE EXTRACTION =====
+
     /**
-     * Generate a palette from an image (placeholder)
-     * @param {ImageData|string} image - Image data or URL
-     * @param {number} count - Number of colors
+     * Generate a palette from an image
+     * @param {HTMLImageElement|File|Blob|string} image - Image source
+     * @param {number} count - Number of colors (default: 5)
+     * @param {Object} options - Extraction options
+     * @param {string} options.method - 'quantization' | 'kmeans' | 'histogram' (default: 'quantization')
+     * @param {number} options.quality - 0-1, lower = faster (default: 1)
+     * @param {number} options.maxIterations - For k-means (default: 10)
+     * @param {number} options.quantizeBits - For quantization (default: 4)
      * @returns {Promise<ColorPalette>} Promise with palette
      */
-    static async fromImage(image, count = 5) {
-        // This is a placeholder for image palette extraction
-        warn('LXRN.ColorPalette.fromImage: Image palette extraction is not yet implemented');
-        return new ColorPalette(['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff']);
+    static async fromImage(image, count = 5, options = {}) {
+        try {
+            const pixelData = await this._getPixelData(image);
+            const colors = this._extractColors(pixelData, count, options);
+            return new ColorPalette(colors);
+        } catch (error) {
+            warn(`LXRN.ColorPalette.fromImage: ${error.message}`);
+            return new ColorPalette([
+                '#666666', '#888888', '#aaaaaa', '#cccccc', '#eeeeee'
+            ]);
+        }
+    }
+
+    /**
+     * Get pixel data from various image sources
+     * @private
+     */
+    static async _getPixelData(image) {
+        // Browser environment
+        if (typeof window !== 'undefined' && window.document) {
+            return this._getPixelDataFromBrowser(image);
+        }
+
+        // React Native (if expo available)
+        if (typeof navigator !== 'undefined' && navigator.product === 'ReactNative') {
+            return this._getPixelDataFromReactNative(image);
+        }
+
+        throw new Error('Unsupported environment');
+    }
+
+    /**
+     * Browser: extract pixel data via Canvas
+     * @private
+     */
+    static _getPixelDataFromBrowser(image) {
+        return new Promise((resolve, reject) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const size = 100;
+
+            canvas.width = size;
+            canvas.height = size;
+
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0, size, size);
+                const imageData = ctx.getImageData(0, 0, size, size);
+                resolve(imageData.data);
+            };
+
+            img.onerror = reject;
+
+            if (typeof image === 'string') {
+                img.src = image;
+            } else if (image instanceof HTMLImageElement) {
+                img.src = image.src;
+            } else if (image instanceof File || image instanceof Blob) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(image);
+            } else {
+                reject(new Error('Unsupported image type for browser'));
+            }
+        });
+    }
+
+    /**
+     * React Native: extract pixel data via expo-image-manipulator
+     * @private
+     */
+    static async _getPixelDataFromReactNative(image) {
+        try {
+            const { manipulateAsync } = require('expo-image-manipulator');
+
+            const manipulated = await manipulateAsync(
+                typeof image === 'string' ? image : image.uri,
+                [{ resize: { width: 100, height: 100 } }],
+                { base64: true }
+            );
+
+            if (!manipulated.base64) {
+                throw new Error('Failed to get base64 data');
+            }
+
+            return this._base64ToPixelArray(manipulated.base64);
+        } catch (error) {
+            throw new Error('React Native: install expo-image-manipulator first');
+        }
+    }
+
+    /**
+     * Convert base64 to pixel array
+     * @private
+     */
+    static _base64ToPixelArray(base64) {
+        if (typeof atob !== 'undefined') {
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        if (typeof Buffer !== 'undefined') {
+            return Buffer.from(base64, 'base64');
+        }
+
+        throw new Error('Unable to decode base64');
+    }
+
+    /**
+     * Extract dominant colors from pixel data
+     * @private
+     */
+    static _extractColors(pixelData, count, options = {}) {
+        const {
+            method = 'quantization',
+            quality = 1,
+            maxIterations = 10,
+            quantizeBits = 4
+        } = options;
+
+        const pixels = this._samplePixels(pixelData, quality);
+
+        if (pixels.length === 0) {
+            throw new Error('No valid pixels found');
+        }
+
+        let extracted;
+        switch (method) {
+            case 'kmeans':
+                extracted = this._kMeans(pixels, count, maxIterations);
+                break;
+            case 'histogram':
+                extracted = this._histogramMethod(pixels, count);
+                break;
+            case 'quantization':
+            default:
+                extracted = this._colorQuantization(pixels, count, quantizeBits);
+                break;
+        }
+
+        return extracted.map(([r, g, b]) => new Color([r, g, b]));
+    }
+
+    /**
+     * Sample pixels from image data
+     * @private
+     */
+    static _samplePixels(data, quality = 1) {
+        const pixels = [];
+        const step = Math.max(1, Math.floor(1 / quality));
+
+        for (let i = 0; i < data.length; i += step * 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const a = data[i + 3];
+
+            if (a < 128) continue;
+
+            pixels.push([r, g, b]);
+        }
+
+        return pixels;
+    }
+
+    /**
+     * Method 1: Color Quantization (Fastest)
+     * @private
+     */
+    static _colorQuantization(pixels, count, bits = 4) {
+        const mask = ~((1 << (8 - bits)) - 1) & 0xFF;
+        const colorMap = new Map();
+
+        pixels.forEach(([r, g, b]) => {
+            const key = `${r & mask},${g & mask},${b & mask}`;
+            colorMap.set(key, (colorMap.get(key) || 0) + 1);
+        });
+
+        const sorted = Array.from(colorMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, count)
+            .map(([key]) => {
+                const [r, g, b] = key.split(',').map(Number);
+                return [r, g, b];
+            });
+
+        return this._ensureColorCount(sorted, count);
+    }
+
+    /**
+     * Method 2: K-Means Clustering (Most Accurate)
+     * @private
+     */
+    static _kMeans(pixels, k, maxIterations = 10) {
+        if (pixels.length === 0) return [];
+        if (k >= pixels.length) return pixels;
+
+        const centroids = this._kMeansPlusPlus(pixels, k);
+        let clusters = Array.from({ length: k }, () => []);
+
+        for (let iter = 0; iter < maxIterations; iter++) {
+            clusters = Array.from({ length: k }, () => []);
+            pixels.forEach(pixel => {
+                let minDist = Infinity;
+                let closest = 0;
+                centroids.forEach((centroid, i) => {
+                    const dist = this._euclideanDistance(pixel, centroid);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closest = i;
+                    }
+                });
+                clusters[closest].push(pixel);
+            });
+
+            let changed = false;
+            centroids.forEach((centroid, i) => {
+                if (clusters[i].length === 0) return;
+                const newCentroid = this._averagePoints(clusters[i]);
+                if (!this._arraysEqual(centroid, newCentroid)) {
+                    centroids[i] = newCentroid;
+                    changed = true;
+                }
+            });
+
+            if (!changed) break;
+        }
+
+        return centroids.map(c => c.map(v => Math.round(clamp(v, 0, 255))));
+    }
+
+    /**
+     * K-Means++ initialization
+     * @private
+     */
+    static _kMeansPlusPlus(pixels, k) {
+        const centroids = [];
+
+        const firstIdx = Math.floor(Math.random() * pixels.length);
+        centroids.push([...pixels[firstIdx]]);
+
+        for (let i = 1; i < k; i++) {
+            const distances = pixels.map(pixel => {
+                let minDist = Infinity;
+                centroids.forEach(centroid => {
+                    const dist = this._euclideanDistance(pixel, centroid);
+                    if (dist < minDist) minDist = dist;
+                });
+                return minDist;
+            });
+
+            const totalDist = distances.reduce((a, b) => a + b, 0);
+            let r = Math.random() * totalDist;
+
+            for (let j = 0; j < pixels.length; j++) {
+                r -= distances[j];
+                if (r <= 0) {
+                    centroids.push([...pixels[j]]);
+                    break;
+                }
+            }
+        }
+
+        return centroids;
+    }
+
+    /**
+     * Method 3: Histogram Method (Balanced)
+     * @private
+     */
+    static _histogramMethod(pixels, count) {
+        const bins = 8;
+        const binSize = 256 / bins;
+        const histogram = new Map();
+
+        pixels.forEach(([r, g, b]) => {
+            const key = `${Math.floor(r/binSize)},${Math.floor(g/binSize)},${Math.floor(b/binSize)}`;
+            histogram.set(key, (histogram.get(key) || 0) + 1);
+        });
+
+        const sorted = Array.from(histogram.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, count)
+            .map(([key]) => {
+                const [r, g, b] = key.split(',').map(v => Number(v) * binSize + binSize/2);
+                return [r, g, b];
+            });
+
+        return this._ensureColorCount(sorted, count);
+    }
+
+    // ===== PRIVATE UTILITY METHODS =====
+
+    /**
+     * Euclidean distance between two RGB colors
+     * @private
+     */
+    static _euclideanDistance(a, b) {
+        const dr = a[0] - b[0];
+        const dg = a[1] - b[1];
+        const db = a[2] - b[2];
+        return dr * dr + dg * dg + db * db;
+    }
+
+    /**
+     * Average of multiple points
+     * @private
+     */
+    static _averagePoints(points) {
+        const sum = points.reduce((acc, p) => [
+            acc[0] + p[0],
+            acc[1] + p[1],
+            acc[2] + p[2]
+        ], [0, 0, 0]);
+        return sum.map(v => v / points.length);
+    }
+
+    /**
+     * Check if two arrays are equal
+     * @private
+     */
+    static _arraysEqual(a, b) {
+        return a.length === b.length && a.every((v, i) => v === b[i]);
+    }
+
+    /**
+     * Ensure we have exactly 'count' colors
+     * @private
+     */
+    static _ensureColorCount(colors, target) {
+        const result = [...colors];
+
+        while (result.length < target) {
+            const last = result[result.length - 1] || [128, 128, 128];
+            const variation = 20 * (result.length + 1);
+            result.push([
+                clamp(last[0] + variation, 0, 255),
+                clamp(last[1] - variation, 0, 255),
+                clamp(last[2] + variation * 0.5, 0, 255)
+            ]);
+        }
+
+        return result.slice(0, target);
     }
 
     // ===== MANIPULATION =====
